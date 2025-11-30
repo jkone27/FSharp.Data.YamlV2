@@ -23,6 +23,7 @@ module Logger =
     let logf fmt = Printf.ksprintf log fmt
 
 module YamlTypeGenerator =
+
     let inferScalarType (value: string) =
         if String.IsNullOrWhiteSpace value then typeof<string>
         elif Boolean.TryParse value |> fst then typeof<bool>
@@ -36,16 +37,35 @@ module YamlTypeGenerator =
             propertyType = returnType,
             isStatic = false,
             getterCode = fun args ->
-                <@@
-                    let doc = (%%args.[0] : obj) :?> YamlDocument
-                    match getPath [ key ] doc.Root |> Option.bind tryGetScalar with
-                    | Some s ->
-                        if returnType = typeof<int> then box (try int s with _ -> 0)
-                        elif returnType = typeof<float> then box (try float s with _ -> 0.0)
-                        elif returnType = typeof<bool> then box (match s.ToLowerInvariant() with "true" -> true | _ -> false)
-                        else box s
-                    | None -> null
-                @@>
+                match returnType with
+                | t when t = typeof<int> ->
+                    <@@
+                        let doc = (%%args.[0] : obj) :?> YamlDocument
+                        match getPath [ key ] doc.Root |> Option.bind tryGetScalar with
+                        | Some s -> try int s with _ -> 0
+                        | None -> 0
+                    @@>
+                | t when t = typeof<float> ->
+                    <@@
+                        let doc = (%%args.[0] : obj) :?> YamlDocument
+                        match getPath [ key ] doc.Root |> Option.bind tryGetScalar with
+                        | Some s -> try float s with _ -> 0.0
+                        | None -> 0.0
+                    @@>
+                | t when t = typeof<bool> ->
+                    <@@
+                        let doc = (%%args.[0] : obj) :?> YamlDocument
+                        match getPath [ key ] doc.Root |> Option.bind tryGetScalar with
+                        | Some s -> s.ToLowerInvariant() = "true"
+                        | None -> false
+                    @@>
+                | _ ->
+                    <@@
+                        let doc = (%%args.[0] : obj) :?> YamlDocument
+                        match getPath [ key ] doc.Root |> Option.bind tryGetScalar with
+                        | Some s -> s
+                        | None -> ""
+                    @@>
         )
 
     let rec generateTypeForMap (asm: Assembly) (ns: string) (typeName: string) (map: Map<string, YamlValue>) =
@@ -57,7 +77,7 @@ module YamlTypeGenerator =
                 ty.AddMember (makeScalarProperty key (inferScalarType s))
 
             | Map inner ->
-                let nestedName = 
+                let nestedName =
                     if key.Length > 0 then Char.ToUpperInvariant(key.[0]).ToString() + key.Substring(1) + "Config"
                     else "NestedConfig"
 
@@ -71,10 +91,10 @@ module YamlTypeGenerator =
                         isStatic = false,
                         getterCode = fun args ->
                             <@@
-                                let doc = (%% args.[0] : obj) :?> YamlDocument
+                                let doc = (%%args.[0] : obj) :?> YamlDocument
                                 match getPath [ key ] doc.Root with
-                                | Some child -> YamlDocument(child)
-                                | None -> YamlDocument(Null)
+                                | Some child -> createRoot child
+                                | None -> createRoot Null
                             @@> :> Expr
                     )
                 )
@@ -85,7 +105,7 @@ module YamlTypeGenerator =
                         typeof<string[]>,
                         fun (args: Expr list) ->
                             <@@
-                                let doc = (%%args.[0] : obj) :?> YamlDocument
+                                let doc = (%% args.[0] : obj) :?> YamlDocument
                                 match getPath [ key ] doc.Root with
                                 | Some (List items) -> items |> List.choose tryGetScalar |> List.toArray
                                 | _ -> [||]
@@ -120,7 +140,10 @@ type YamlProvider(config: TypeProviderConfig) as this =
             parameters = [ ProvidedStaticParameter("FilePath", typeof<string>) ],
             instantiationFunction = fun typeName args ->
                 let filePath = args.[0] :?> string
-                let full = if Path.IsPathRooted filePath then filePath else Path.Combine(config.ResolutionFolder, filePath) |> Path.GetFullPath
+                let full =
+                    if Path.IsPathRooted filePath then filePath
+                    else Path.Combine(config.ResolutionFolder, filePath) |> Path.GetFullPath
+
                 if not (File.Exists full) then failwithf "YAML file not found: %s" full
 
                 let text = File.ReadAllText full
@@ -128,7 +151,7 @@ type YamlProvider(config: TypeProviderConfig) as this =
 
                 let rootTy = ProvidedTypeDefinition(asm, ns, typeName, Some typeof<obj>, hideObjectMethods = true, isErased = true)
 
-                // Generate nested root type from map
+                // Generate typed Root type
                 let rootConfigTy =
                     match doc.Root with
                     | Map m -> YamlTypeGenerator.generateTypeForMap asm ns (typeName + ".Root") m
@@ -136,7 +159,7 @@ type YamlProvider(config: TypeProviderConfig) as this =
 
                 rootTy.AddMember rootConfigTy
 
-                // Static GetSample method returning the Root type
+                // Static GetSample returning typed root
                 let getSample =
                     ProvidedMethod(
                         "GetSample",
@@ -147,16 +170,16 @@ type YamlProvider(config: TypeProviderConfig) as this =
                             <@@
                                 let text = File.ReadAllText(full)
                                 let doc = FSharp.Data.YamlProviderV2.Runtime.YamlParsing.parseYaml text
-                                YamlDocument(doc.Root) :> obj
+                                createRoot doc.Root
                             @@>
                     )
                 rootTy.AddMember getSample
 
-                // Static Load(filePath) method returning the Root type
+                // Static Load(filePath) returning typed root
                 let load =
                     ProvidedMethod(
                         "Load",
-                        [ProvidedParameter("filePath", typeof<string>)],
+                        [ ProvidedParameter("filePath", typeof<string>) ],
                         rootConfigTy,
                         isStatic = true,
                         invokeCode = fun args ->
@@ -164,7 +187,7 @@ type YamlProvider(config: TypeProviderConfig) as this =
                                 let path = (%%args.[0] : obj) :?> string
                                 let text = File.ReadAllText(path)
                                 let doc = FSharp.Data.YamlProviderV2.Runtime.YamlParsing.parseYaml text
-                                YamlDocument(doc.Root) :> obj
+                                createRoot doc.Root
                             @@>
                     )
                 rootTy.AddMember load

@@ -15,9 +15,19 @@ module YamlParsing =
         | List of YamlValue list
         | Null
 
+
+
     /// Parsed YAML container (used by the type provider)
     type YamlDocument (root: YamlValue) =
         member _.Root = root
+
+        /// The actual runtime type returned by GetSample / Load
+    type Root(doc: YamlDocument) =
+        member _.Doc = doc
+
+    /// Create a Root instance from a parsed YamlValue
+    let createRoot (yamlValue: YamlValue) =
+        Root(YamlDocument(yamlValue))
 
     /// Convert YamlDotNet object → internal YamlValue
     let rec private convert (v: obj) : YamlValue =

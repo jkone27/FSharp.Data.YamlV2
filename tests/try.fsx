@@ -7,6 +7,8 @@
 #r "Runtime.dll"
 #r "DesignTime.dll"
 
+// #r "nuget: FSharp.Data.YamlProviderV2, 0.0.1"
+
 open System
 
 // Define the YAML file path as a literal so it can be used in the type provider
@@ -25,28 +27,28 @@ try
     // Test top-level scalar properties
     printfn "=== Top-level properties ==="
     printfn "name: %s" sample.name
-    printfn "version: %s" sample.version
+    printfn "version: %f" sample.version
     printfn "debug: %s" (sample.debug.ToString())
     printfn ""
     
     // Test nested properties (database)
     printfn "=== Database configuration ==="
-    printfn "database.host: %s" Config.database.host
-    printfn "database.port: %s" Config.database.port
-    printfn "database.name: %s" Config.database.name
-    printfn "database.username: %s" Config.database.username
+    printfn "database.host: %s" sample.database.host
+    printfn "database.port: %i" sample.database.port
+    printfn "database.name: %s" sample.database.name
+    printfn "database.username: %s" sample.database.username
     printfn ""
     
     // Test other nested properties (logging)
     printfn "=== Logging configuration ==="
-    printfn "logging.level: %s" Config.logging.level
-    printfn "logging.format: %s" Config.logging.format
+    printfn "logging.level: %s" sample.logging.level
+    printfn "logging.format: %s" sample.logging.format
     printfn ""
     
     // Test ports (nested scalars)
     printfn "=== Port configuration ==="
-    printfn "ports.http: %s" Config.ports.http
-    printfn "ports.https: %s" Config.ports.https
+    printfn "ports.http: %i" sample.ports.http
+    printfn "ports.https: %i" sample.ports.https
     printfn ""
     
     printfn "✅ All tests passed!"
