@@ -1,0 +1,832 @@
+{
+  "yamlProviderApiSummary": {
+    "repositoryUrl": "https://github.com/baronfel/FSharp.Data.YamlProvider",
+    "status": "Incomplete demonstration (no NET8/NET10 support)",
+    "baseType": "Root class that inherits from obj",
+    "mainTypeProviderName": "YamlProvider<...>",
+    "invocationParameters": {
+      "FilePath": {
+        "type": "string",
+        "required": false,
+        "description": "Path to YAML file for design-time inspection",
+        "mutuallyExclusive": "YamlText"
+      },
+      "ReadOnly": {
+        "type": "bool",
+        "required": false,
+        "default": false,
+        "description": "If true, generated properties are read-only; if false, properties are mutable"
+      },
+      "YamlText": {
+        "type": "string",
+        "required": false,
+        "description": "YAML content as inline string; mutually exclusive with FilePath",
+        "mutuallyExclusive": "FilePath"
+      },
+      "InferTypesFromStrings": {
+        "type": "bool",
+        "required": false,
+        "default": true,
+        "description": "Whether to infer scalar types (int, bool, etc.) from string values"
+      }
+    },
+    "providedTypeStructure": {
+      "propertiesGenerated": "Nested property structure matching YAML hierarchy",
+      "propertyMapping": {
+        "scalars": "YAML leaf values → typed properties (string, int, bool, float, TimeSpan, Guid, Uri)",
+        "maps": "YAML nested objects → nested types with properties",
+        "lists": "YAML sequences → ResizeArray<T> properties"
+      },
+      "supportedScalarTypes": [
+        "string (default)",
+        "int32",
+        "int64",
+        "bool",
+        "float/double",
+        "TimeSpan",
+        "DateTime",
+        "Guid",
+        "Uri"
+      ]
+    },
+    "designTimeFeatures": {
+      "fileWatching": true,
+      "invalidationOnChange": true,
+      "resolutionFolder": "Relative paths resolved against compilation folder"
+    },
+    "runtimeFeatures": {
+      "loadFromFile": "config.Load(filePath: string)",
+      "loadFromText": "config.LoadText(yamlText: string)",
+      "loadAndWatch": "config.LoadAndWatch(filePath: string)",
+      "save": [
+        "config.Save()",
+        "config.Save(filePath: string)",
+        "config.Save(stream: Stream)",
+        "config.Save(writer: TextWriter)"
+      ],
+      "toString": "config.ToString() returns YAML text",
+      "changedEvent": "Changed: EventHandler on each nested type reports when config is updated",
+      "errorEvent": "Error: IEvent<Exception> for parse errors"
+    },
+    "typeCoercion": {
+      "stringToInt32": "If field expects int32 but YAML has string",
+      "int32ToInt64": "Automatic promotion when field expects int64",
+      "stringTypes": "Non-matching types fallback to string if type inference enabled"
+    },
+    "optionalKeysHandling": "All keys are optional; missing keys result in default values (null, 0, false, etc.)",
+    "nestedStructures": {
+      "objects": "Nested YAML maps create nested types with underscore-prefixed private fields",
+      "arrays": "YAML sequences → ResizeArray<T> with property getter/setter",
+      "arrayOfMaps": "Sequence of maps creates array of generated object types"
+    },
+    "exampleUsage": {
+      "definationType": "type MyConfig = YamlProvider<FilePath=\"config.yaml\", ReadOnly=false>",
+      "instantiation": "let config = MyConfig()",
+      "access": "config.Database.Host  // accesses Database.Host in YAML",
+      "mutation": "config.Database.Port <- 5433  // if not ReadOnly",
+      "loading": "config.Load(\"runtime.yaml\")  // loads and updates from file",
+      "saving": "config.Save()  // saves back to originally loaded file"
+    }
+  },
+  "yamlConfigProviderApiSummary": {
+    "repositoryUrl": "https://github.com/fsprojects/FSharp.Configuration",
+    "status": "Maintained, actively used, supports net461/netstandard2.0+",
+    "packageName": "FSharp.Configuration",
+    "currentVersion": "1.0.1+",
+    "baseType": "Root class that inherits from obj",
+    "mainTypeProviderName": "YamlConfig<...>",
+    "invocationParameters": {
+      "FilePath": {
+        "type": "string",
+        "required": false,
+        "description": "Path to YAML file for design-time inspection",
+        "example": "YamlConfig<\"Config.yaml\">"
+      },
+      "ReadOnly": {
+        "type": "bool",
+        "required": false,
+        "default": false,
+        "description": "If true, generated properties are read-only; if false, properties are mutable"
+      },
+      "YamlText": {
+        "type": "string",
+        "required": false,
+        "description": "YAML content as inline string",
+        "example": "YamlConfig<YamlText=\"Key: value\">"
+      },
+      "InferTypesFromStrings": {
+        "type": "bool",
+        "required": false,
+        "default": true,
+        "description": "Whether to infer scalar types from string values (v1.0.0+)"
+      }
+    },
+    "providedTypeStructure": {
+      "propertiesGenerated": "Hierarchical property structure matching YAML structure",
+      "propertyMapping": {
+        "scalars": "YAML leaf values → typed properties",
+        "maps": "YAML nested objects → nested provided types with Changed event",
+        "lists": "YAML sequences → IList<T> with setter for atomic replacement",
+        "sequences": "Lists can contain scalars or objects"
+      },
+      "supportedScalarTypes": [
+        "string",
+        "int32",
+        "int64",
+        "bool",
+        "float/double",
+        "TimeSpan",
+        "DateTime",
+        "Guid",
+        "Uri (supports http, https, ftp, ftps, sftp, amqp, file, ssh, tcp schemes)"
+      ]
+    },
+    "designTimeFeatures": {
+      "fileWatching": true,
+      "invalidationOnChange": true,
+      "staticParams": [
+        "FilePath (string)",
+        "ReadOnly (bool)",
+        "YamlText (string)",
+        "InferTypesFromStrings (bool)"
+      ],
+      "typeGenerationStrategy": "Non-erased types with ProvidedTypeDefinition hierarchy"
+    },
+    "runtimeFeatures": {
+      "initialization": "config = YamlConfig()",
+      "loadFromFile": "config.Load(filePath: string)",
+      "loadFromFileAsync": "config.LoadAsync(filePath: string)",
+      "loadFromText": "config.LoadText(yamlText: string)",
+      "loadFromTextReader": "config.Load(reader: TextReader)",
+      "loadAndWatch": "config.LoadAndWatch(filePath: string)",
+      "save": [
+        "config.Save()",
+        "config.Save(filePath: string)",
+        "config.Save(stream: Stream)",
+        "config.Save(writer: TextWriter)"
+      ],
+      "toString": "config.ToString() returns YAML representation",
+      "changedEvent": "Changed: EventHandler<EventArgs> on all types notifies of updates via Load/LoadText",
+      "errorEvent": "Error: IEvent<Exception> for deserialization errors"
+    },
+    "typeCoercion": {
+      "stringToInt32": "Automatic if field expects int but YAML has string",
+      "int32ToInt64": "Automatic promotion for int64 fields",
+      "stringFallback": "Non-matching/mixed types default to string (MixedTypes pattern)"
+    },
+    "optionalKeysHandling": "Missing YAML keys use default values; unknown keys in YAML are silently ignored",
+    "nestedStructures": {
+      "objects": "Nested maps → nested provided types",
+      "arrays": "YAML sequences → IList<T> (ResizeArray<T> runtime)",
+      "arrayOfObjects": "Sequence of maps → IList<ObjectType>"
+    },
+    "keyNamingConventions": {
+      "normalKeys": "camelCase, snake_case, PascalCase → property names via niceName provider",
+      "numericKeys": "Numeric YAML keys → escaped property names (1 → ``1``)",
+      "specialChars": "Unsupported characters in keys are handled by niceName logic"
+    },
+    "exampleUsage": {
+      "definationType": "type Config = YamlConfig<\"Config.yaml\">",
+      "instantiation": "let config = Config()",
+      "access": "config.Mail.Smtp.Host",
+      "listAccess": "config.Mail.ErrorNotificationRecipients.[0]",
+      "mutation": "config.DB.ConnectionString <- \"new string\"",
+      "listMutation": "config.Items <- newList  // atomic replacement only",
+      "loading": "config.Load(\"runtime.yaml\")",
+      "saving": "config.Save()",
+      "watching": "config.LoadAndWatch(\"config.yaml\")  // watch for changes",
+      "fromText": "config.LoadText(\"Key: value\")"
+    },
+    "releaseHistory": {
+      "v1.0.1": "NuGet targets .NET 4.6",
+      "v1.0.0": "Added InferTypesFromStrings parameter",
+      "v0.6.4": "Added Guid support",
+      "v0.6.2": "int32→int64 coercion support",
+      "v0.6.1": "Mixed-type fallback to strings",
+      "v0.5.9": "Nested lists support",
+      "v0.5.8": "SharpYaml NuGet dependency",
+      "v0.5.0": "Sequence of maps support"
+    }
+  },
+  "differencesAndGaps": {
+    "baronfelYamlProvider": {
+      "strengths": [
+        "Minimal demonstration provider",
+        "Clear separation of design-time and runtime assemblies",
+        "Good reference for understanding type provider architecture"
+      ],
+      "weaknesses": [
+        "No maintenance since initial commit",
+        "Not published to NuGet",
+        "No .NET 8/10 support",
+        "Uses YamlDotNet but not as packaged dependency",
+        "Limited testing",
+        "No documentation beyond README"
+      ],
+      "dotnetCompatibility": {
+        "issue": "NET8 and NET10 not targeted",
+        "reason": "Type provider SDK dependencies may be outdated",
+        "breaking": "ProvidedTypes API might have changes",
+        "status": "Open issue #1: 'NET8 and publish as nuget package?'"
+      }
+    },
+    "fsharpConfigurationProvider": {
+      "strengths": [
+        "Production-ready and widely used",
+        "Actively maintained",
+        "Comprehensive test coverage",
+        "Supports multiple frameworks (net461, netstandard2.0)",
+        "Well-documented with extensive examples",
+        "NuGet distribution",
+        "Event system for change notifications",
+        "Async loading support",
+        "Rich type coercion logic"
+      ],
+      "weaknesses": [
+        "NET8/NET10 support unclear in current releases",
+        "More complex codebase due to multiple providers",
+        "Binding to specific YAML library versions"
+      ]
+    },
+    "keyDifferences": {
+      "codebaseSize": "baronfel ~1000 LOC vs FSharp.Configuration ~3000+ LOC",
+      "complexity": "baronfel is simpler reference; FSharp.Configuration is production-grade",
+      "testing": "baronfel minimal tests; FSharp.Configuration extensive Expecto test suite",
+      "documentation": "baronfel README only; FSharp.Configuration full Markdown docs",
+      "maintenance": "baronfel experimental; FSharp.Configuration actively maintained",
+      "distribution": "baronfel none; FSharp.Configuration on NuGet",
+      "features": "FSharp.Configuration adds LoadAsync, comprehensive error events, numeric key support"
+    },
+    "compatibilityGaps": {
+      "whyBaronfelDoesntWork": [
+        "Type provider SDK NuGet packages not updated for .NET 8/10",
+        "Likely targeting older FSharp.Core versions",
+        "ProvidedTypes assembly version mismatch",
+        "No multi-targeting in project file"
+      ],
+      "modernizationNeeded": [
+        "Update to latest ProviderImplementation.ProvidedTypes.UncheckedQuotations NuGet",
+        "Multi-target net8.0 and net10.0 in .fsproj files",
+        "Update FSharp.Core dependencies",
+        "Ensure YamlDotNet works with target frameworks",
+        "Update test framework to modern versions",
+        "CI/CD configuration for multi-framework testing"
+      ]
+    },
+    "knownLimitations": {
+      "bothProviders": [
+        "Cannot add properties dynamically at runtime",
+        "List replacement only (no add/remove individual items at runtime)",
+        "Type inference from YAML structure is static (design-time)",
+        "No nested lists of scalars (only maps)",
+        "Numeric keys require escaping in F#"
+      ],
+      "yamlStructureSupport": {
+        "supported": [
+          "Scalar values",
+          "Nested objects (maps)",
+          "Arrays of scalars",
+          "Arrays of objects",
+          "Mixed-type arrays (fallback to string)"
+        ],
+        "unsupported": [
+          "Nested arrays (arrays of arrays)",
+          "YAML anchors and aliases",
+          "Custom YAML tags",
+          "Dynamic property addition"
+        ]
+      }
+    }
+  },
+  "designTimeRequirements": {
+    "architecture": "Separate design-time assembly that generates types at compile-time",
+    "entryPoint": "[<TypeProvider>] attribute on class inheriting from TypeProviderForNamespaces",
+    "responsibilities": [
+      "Parse YAML file at compile-time",
+      "Analyze structure to determine scalar types",
+      "Generate ProvidedTypeDefinition hierarchy",
+      "Register change watchers for files",
+      "Invalidate provider when YAML changes"
+    ],
+    "keyComponents": {
+      "context": "TypeProviderConfig provides resolution folder and type resolution",
+      "fileWatching": "Watch YAML files and trigger provider invalidation",
+      "staticParameters": "Define parameters like FilePath, ReadOnly, YamlText, InferTypesFromStrings",
+      "typeGeneration": "Transform YAML structure into provided types with properties",
+      "eventHandling": "Generate Changed events for nested types"
+    },
+    "dependencies": [
+      "ProviderImplementation.ProvidedTypes (NuGet: ProvidedTypes)",
+      "YamlDotNet (NuGet: YamlDotNet)",
+      "FSharp.Core (matches target framework)",
+      "System.Reflection",
+      "System.IO"
+    ],
+    "parsingStrategy": {
+      "step1": "Load YAML file at design-time",
+      "step2": "Deserialize with YamlDotNet.DeserializerBuilder()",
+      "step3": "Convert YAML obj structure to internal Node tree (Scalar|Map|List)",
+      "step4": "Infer types for scalars using ValueParser (Int|Bool|Float|etc.)",
+      "step5": "Transform Node tree to ProvidedTypeDefinition hierarchy",
+      "step6": "Generate properties with quotation expressions"
+    },
+    "typeInferenceLogic": {
+      "stringParsing": "Try patterns: Bool, Int, Int64, Float, TimeSpan, Guid, Uri, DateTime, fallback String",
+      "typeMapping": "Parsed types → .NET CLR types (int, bool, double, etc.)",
+      "default": "If no match and InferTypesFromStrings=false, treat as string",
+      "edgeCases": "null→empty string, mixed-type arrays→string type"
+    },
+    "quotationGeneration": {
+      "scalars": "<@@ value @@> for compile-time constants",
+      "typeConversion": "TimeSpan.Parse(\"hh:mm:ss\"), Uri(string), etc.",
+      "fieldInitialization": "Expr.FieldSet in constructor",
+      "propertyGetterSetter": "Expr.FieldGet / Expr.FieldSet"
+    }
+  },
+  "runtimeRequirements": {
+    "architecture": "Runtime assembly loaded by compiled type provider types",
+    "baseClass": "Root class with Load/LoadText/Save methods and Changed event",
+    "responsibilities": [
+      "Deserialize YAML at runtime",
+      "Update type instances from YAML content",
+      "Serialize back to YAML",
+      "Fire Changed events",
+      "Handle file watching"
+    ],
+    "keyMethods": {
+      "LoadText": "Parse YAML string and update properties",
+      "Load": "Read YAML file and call LoadText",
+      "LoadAsync": "Async version of Load",
+      "LoadAndWatch": "Load and watch file for changes",
+      "Save": "Serialize properties back to YAML",
+      "ToString": "Return YAML representation"
+    },
+    "dependencies": [
+      "YamlDotNet (NuGet: YamlDotNet)",
+      "System.IO",
+      "System.Collections",
+      "System.Reflection"
+    ],
+    "updateMechanism": {
+      "parsing": "DeserializerBuilder() to parse YAML into Dictionary<obj,obj> structure",
+      "nodeConversion": "Convert YAML deserialized objects to internal Node tree",
+      "fieldUpdate": "Use reflection to set private fields on generated types",
+      "eventRaising": "Pull Changed events from children up to parent"
+    },
+    "changeTracking": {
+      "eventField": "_changed: EventHandler per generated type",
+      "eventRaising": "When data updates, fire Changed event on affected type and parents",
+      "multicastDelegate": "Combine/remove delegates for subscribers"
+    },
+    "typeConversion": {
+      "stringToTarget": "Convert string values to field target types",
+      "int32ToInt64": "Promote int32 to int64 when needed",
+      "fallbackBehavior": "If types don't match and can't convert, throw descriptive error"
+    },
+    "errorHandling": {
+      "parseErrors": "Catch YamlException and raise with inner exception",
+      "typeErrors": "Catch conversion errors and report which field/type failed",
+      "errorEvent": "Fire Error event with exception for subscribers"
+    }
+  },
+  "v2DesignPlan": {
+    "overview": "FSharp.Data.YamlProviderV2: Modern, maintainable YAML type provider for .NET 8/10",
+    "goals": [
+      "Support .NET 8.0 and .NET 10.0",
+      "Maintain API compatibility with FSharp.Configuration.YamlConfig",
+      "Modern C#-compatible code",
+      "Comprehensive testing",
+      "Clear documentation",
+      "NuGet distribution"
+    ],
+    "coreApiDesign": {
+      "typeProviderUsage": "type Config = YamlProvider<FilePath=\"config.yaml\", ReadOnly=false, InferTypesFromStrings=true>",
+      "instantiation": "let config = Config()",
+      "staticParameters": {
+        "FilePath": "Path to YAML file (optional, mutually exclusive with YamlText)",
+        "ReadOnly": "Generate read-only (true) or mutable (false) properties",
+        "YamlText": "Inline YAML content (optional, mutually exclusive with FilePath)",
+        "InferTypesFromStrings": "Infer types from string values (bool, default=true)"
+      },
+      "runtimeAPI": {
+        "loading": [
+          "Load(filePath: string)",
+          "LoadAsync(filePath: string)",
+          "LoadText(yamlText: string)",
+          "LoadAndWatch(filePath: string)"
+        ],
+        "saving": [
+          "Save()",
+          "Save(filePath: string)",
+          "Save(stream: Stream)"
+        ],
+        "events": [
+          "Changed: EventHandler (on all types)",
+          "Error: IEvent<Exception>"
+        ]
+      }
+    },
+    "yamlStructureSupport": {
+      "scalars": {
+        "types": "string, int, int64, bool, float, TimeSpan, DateTime, Guid, Uri",
+        "inference": "Automatic from string value using pattern matching",
+        "fallback": "String if InferTypesFromStrings=false or type ambiguous"
+      },
+      "objects": {
+        "handling": "Nested YAML maps → nested provided types",
+        "properties": "Each key → property on nested type",
+        "changed": "Each nested type has Changed event"
+      },
+      "arrays": {
+        "scalars": "YAML sequence of scalars → IList<T> property",
+        "objects": "YAML sequence of maps → IList<ObjectType> property",
+        "mixed": "Mixed types → IList<string> (fallback)",
+        "mutation": "Atomic replacement only (set entire list)"
+      }
+    },
+    "typeCoercionRules": {
+      "string→target": "If string and field type mismatch, try parsing",
+      "int32→int64": "Automatic promotion",
+      "default": "If can't coerce, throw with context",
+      "nullable": "Not applicable; all fields have defaults"
+    },
+    "filePathHandling": {
+      "designTimeYaml": "Sample YAML file in project directory",
+      "location": "Relative to compilation folder (ResolutionFolder)",
+      "example": "\"src/configs/app.yaml\" or \"config.yaml\"",
+      "watchingStrategy": "File system watcher invalidates provider on changes"
+    },
+    "keyModules": {
+      "designTime": {
+        "YamlProviderDesignTime": "Main type provider class",
+        "YamlParser": "Parse YAML string → internal Node tree",
+        "TypeFactory": "Transform Node tree → ProvidedTypeDefinition",
+        "ValueParser": "Infer .NET types from string values",
+        "QuotationGenerator": "Generate quotation expressions for properties"
+      },
+      "runtime": {
+        "YamlRoot": "Base class for all generated types",
+        "YamlParser": "Deserialize and update at runtime",
+        "TypeUpdater": "Use reflection to populate fields from YAML",
+        "EventRaiser": "Manage Changed/Error events"
+      }
+    },
+    "implementationPhases": [
+      {
+        "phase": "1: Setup",
+        "tasks": [
+          "Create .fsproj files for DesignTime and Runtime",
+          "Add NuGet dependencies (ProvidedTypes, YamlDotNet)",
+          "Set up multi-framework targeting (net8.0, net10.0)",
+          "Create project structure"
+        ],
+        "duration": "1-2 days"
+      },
+      {
+        "phase": "2: Core Runtime",
+        "tasks": [
+          "Implement YamlRoot base class",
+          "Implement Parser.parse (YamlDotNet → Node tree)",
+          "Implement TypeUpdater (reflection-based field updates)",
+          "Implement Save/Load methods",
+          "Implement Changed event infrastructure"
+        ],
+        "duration": "2-3 days"
+      },
+      {
+        "phase": "3: Type Provider Design-Time",
+        "tasks": [
+          "Implement ValueParser (string type inference)",
+          "Implement TypeFactory (Node → ProvidedType)",
+          "Implement QuotationGenerator (property expressions)",
+          "Implement main provider class with static parameters",
+          "Add file watching"
+        ],
+        "duration": "3-4 days"
+      },
+      {
+        "phase": "4: Testing",
+        "tasks": [
+          "Create test YAML samples",
+          "Write unit tests for parsing/type inference",
+          "Write integration tests for provider",
+          "Test mutability and events",
+          "Test error handling"
+        ],
+        "duration": "2-3 days"
+      },
+      {
+        "phase": "5: Documentation & Packaging",
+        "tasks": [
+          "Write README with examples",
+          "Create Markdown documentation",
+          "Create sample projects",
+          "Package as NuGet",
+          "Add CI/CD"
+        ],
+        "duration": "2 days"
+      }
+    ]
+  },
+  "yamlSampleRecommendations": {
+    "simpleScalars": {
+      "filename": "samples/simple.yaml",
+      "purpose": "Test basic scalar type inference",
+      "content": "Name: John\nAge: 30\nActive: true\nBalance: 1234.56\nJoinedDate: 2024-01-15T00:00:00Z\nId: 550e8400-e29b-41d4-a716-446655440000"
+    },
+    "nestedObjects": {
+      "filename": "samples/nested.yaml",
+      "purpose": "Test nested type generation and property access",
+      "content": "Database:\n  Host: localhost\n  Port: 5432\n  ConnectionString: postgres://user:pass@localhost/db\nLogging:\n  Level: Debug\n  Path: /var/log/app.log"
+    },
+    "arrays": {
+      "filename": "samples/arrays.yaml",
+      "purpose": "Test scalar and object arrays",
+      "content": "Tags:\n  - production\n  - important\n  - archived\nHosts:\n  - Name: web01\n    IP: 192.168.1.1\n  - Name: web02\n    IP: 192.168.1.2"
+    },
+    "mixed": {
+      "filename": "samples/mixed.yaml",
+      "purpose": "Test complex real-world config",
+      "content": "AppName: MyApp\nVersion: 1.0.0\nServer:\n  Host: localhost\n  Port: 8080\n  SSL: true\nDatabase:\n  Connections:\n    - Name: Primary\n      Host: db01.example.com\n      Port: 5432\n    - Name: Replica\n      Host: db02.example.com\n      Port: 5432\nFeatures:\n  EnableCache: true\n  CacheTTL: 3600\nLogging:\n  Levels:\n    - Info\n    - Warning\n    - Error"
+    },
+    "edgeCases": {
+      "filename": "samples/edge-cases.yaml",
+      "purpose": "Test edge case handling",
+      "content": "EmptyString: ''\nNullValue: null\nNumericString: '123'\nUriSchemes:\n  - http://example.com\n  - https://secure.example.com\n  - ftp://files.example.com\nMixedTypes:\n  - text\n  - 42\n  - http://example.com"
+    },
+    "numeric_keys": {
+      "filename": "samples/numeric-keys.yaml",
+      "purpose": "Test numeric and special character keys",
+      "content": "1: first\n2: second\n3a: third\nerror-code: 500\n'special-key': value"
+    }
+  },
+  "implementationPhases": [
+    {
+      "phaseName": "Phase 1: Foundation Setup",
+      "duration": "1-2 days",
+      "tasks": [
+        {
+          "task": "Create project structure",
+          "files": [
+            "MyProvider.sln",
+            "src/MyProvider.DesignTime/MyProvider.DesignTime.fsproj",
+            "src/MyProvider.Runtime/MyProvider.Runtime.fsproj",
+            "tests/MyProvider.Tests/MyProvider.Tests.fsproj"
+          ]
+        },
+        {
+          "task": "Add NuGet dependencies",
+          "packages": [
+            "ProvidedTypes (latest)",
+            "YamlDotNet (latest)",
+            "FSharp.Core (14.0+ for net8/10)"
+          ]
+        },
+        {
+          "task": "Configure multi-targeting",
+          "content": "net8.0;net10.0 in .fsproj"
+        },
+        {
+          "task": "Set up test framework",
+          "framework": "xUnit or Expecto"
+        }
+      ]
+    },
+    {
+      "phaseName": "Phase 2: Runtime Foundation",
+      "duration": "2-3 days",
+      "tasks": [
+        {
+          "task": "Implement YamlRoot base class",
+          "includes": [
+            "Constructor taking bool inferTypes",
+            "Private field infrastructure",
+            "Changed event field",
+            "Error event field"
+          ]
+        },
+        {
+          "task": "Implement Parser module",
+          "functions": [
+            "parse: string → Node",
+            "Value types: Int|Int64|String|Bool|Float|TimeSpan|DateTime|Guid|Uri",
+            "Node types: Scalar|Map|List",
+            "YamlDotNet deserialization wrapper"
+          ]
+        },
+        {
+          "task": "Implement TypeUpdater module",
+          "functions": [
+            "update: obj → Node → unit",
+            "updateScalar: field update with type coercion",
+            "updateMap: nested object updates",
+            "updateList: list replacement",
+            "Event raising: bubble Changed events"
+          ]
+        },
+        {
+          "task": "Implement Save infrastructure",
+          "methods": [
+            "Save(stream: Stream)",
+            "Save(writer: TextWriter)",
+            "Save(filePath: string)",
+            "ToString()",
+            "YamlDotNet serialization"
+          ]
+        }
+      ]
+    },
+    {
+      "phaseName": "Phase 3: Type Provider Implementation",
+      "duration": "3-4 days",
+      "tasks": [
+        {
+          "task": "Implement ValueParser",
+          "patterns": [
+            "Bool (true|false|yes|no)",
+            "Int (32-bit signed)",
+            "Int64 (64-bit signed)",
+            "Float (double precision)",
+            "TimeSpan (HH:MM:SS)",
+            "DateTime (ISO8601)",
+            "Guid (D format)",
+            "Uri (schemes: http, https, ftp, ftps, sftp, file, ssh, tcp, amqp)"
+          ]
+        },
+        {
+          "task": "Implement TypeFactory",
+          "functions": [
+            "transformScalar: generate property + field",
+            "transformMap: generate nested type",
+            "transformList: generate IList<T> property",
+            "generateChangedEvent: EventHandler infrastructure",
+            "foldChildren: process multiple properties"
+          ]
+        },
+        {
+          "task": "Implement YamlProvider class",
+          "includes": [
+            "[<TypeProvider>] attribute",
+            "Inherit TypeProviderForNamespaces",
+            "DefineStaticParameters: FilePath|ReadOnly|YamlText|InferTypesFromStrings",
+            "instantiationFunction: create type from YAML",
+            "File watching and invalidation"
+          ]
+        },
+        {
+          "task": "Implement quotation generation",
+          "expressions": [
+            "Scalar expressions: <@@ value @@>",
+            "Type conversions: <@@ int.Parse(s) @@>",
+            "Field initialization in constructor",
+            "Property getters/setters"
+          ]
+        }
+      ]
+    },
+    {
+      "phaseName": "Phase 4: Testing",
+      "duration": "2-3 days",
+      "tasks": [
+        {
+          "task": "Create test YAML samples",
+          "samples": [
+            "samples/simple.yaml",
+            "samples/nested.yaml",
+            "samples/arrays.yaml",
+            "samples/mixed.yaml",
+            "samples/edge-cases.yaml",
+            "samples/numeric-keys.yaml"
+          ]
+        },
+        {
+          "task": "Write runtime parser tests",
+          "coverage": [
+            "Type inference for all scalar types",
+            "Nested structure parsing",
+            "Array/list parsing",
+            "Error handling",
+            "Edge cases (empty, null, mixed)"
+          ]
+        },
+        {
+          "task": "Write type provider tests",
+          "coverage": [
+            "Basic property access",
+            "Type correctness",
+            "Nested type access",
+            "Array access and mutation",
+            "ReadOnly vs mutable",
+            "Changed events",
+            "Error events"
+          ]
+        },
+        {
+          "task": "Write integration tests",
+          "scenarios": [
+            "Load from file, modify, save",
+            "Load from text",
+            "LoadAndWatch with file change",
+            "Type inference enabled/disabled",
+            "Real-world config scenarios"
+          ]
+        },
+        {
+          "task": "Test multi-framework builds",
+          "frameworks": [
+            "net8.0",
+            "net10.0"
+          ]
+        }
+      ]
+    },
+    {
+      "phaseName": "Phase 5: Documentation & Release",
+      "duration": "2 days",
+      "tasks": [
+        {
+          "task": "Write README.md",
+          "sections": [
+            "Overview",
+            "Installation",
+            "Quick Start",
+            "Examples",
+            "API Reference",
+            "YAML Structure Support",
+            "Type Coercion Rules",
+            "Contributing",
+            "License"
+          ]
+        },
+        {
+          "task": "Create example projects",
+          "examples": [
+            "Basic usage",
+            "Complex nested config",
+            "File watching",
+            "Mutation and saving"
+          ]
+        },
+        {
+          "task": "Create NuGet package",
+          "config": [
+            "Package.Id: FSharp.Data.YamlProviderV2",
+            "Include both design-time and runtime",
+            "Target frameworks: net8.0, net10.0",
+            "Dependencies: YamlDotNet"
+          ]
+        },
+        {
+          "task": "Set up CI/CD",
+          "pipelines": [
+            "GitHub Actions for test/build",
+            "Multi-framework testing",
+            "NuGet deployment"
+          ]
+        }
+      ]
+    }
+  ],
+  "references": {
+    "primaryRepositories": [
+      "https://github.com/baronfel/FSharp.Data.YamlProvider",
+      "https://github.com/fsprojects/FSharp.Configuration"
+    ],
+    "documentation": [
+      "https://fsprojects.github.io/FSharp.Configuration/YamlConfigProvider.html",
+      "https://fsprojects.github.io/FSharp.Configuration/index.html"
+    ],
+    "dependencies": [
+      "https://github.com/dotnet/ProviderImplementation.ProvidedTypes",
+      "https://github.com/aaubry/YamlDotNet"
+    ],
+    "microsoftResources": [
+      "Type Providers (Microsoft Docs)",
+      "F# Quotations",
+      "Reflection API"
+    ],
+    "keyFiles": {
+      "baronfelProvider": [
+        "src/FSharp.Data.YamlProvider/FSharp.Data.YamlProvider.fs (main implementation ~800 LOC)",
+        "tests/FSharp.Data.YamlProvider.Tests/FSharp.Data.YamlProvider.Tests.fs",
+        "README.md"
+      ],
+      "fsharpConfiguration": [
+        "src/FSharp.Configuration.DesignTime/YamlConfigProvider.fs",
+        "src/FSharp.Configuration.Runtime/YamlConfigProvider.Runtime.fs",
+        "src/FSharp.Configuration.Runtime/FSharp.Configuration.Helper.fs",
+        "tests/FSharp.Configuration.Tests/YamlProvider.Tests.fs",
+        "docs/YamlConfigProvider.fsx",
+        "RELEASE_NOTES.md"
+      ]
+    },
+    "relatedTopics": [
+      "F# Type Providers",
+      "YamlDotNet library",
+      "Quotations and code generation",
+      ".NET 8/10 compatibility",
+      "Multi-targeting F# projects",
+      "Design-time vs runtime code"
+    ]
+  }
+}

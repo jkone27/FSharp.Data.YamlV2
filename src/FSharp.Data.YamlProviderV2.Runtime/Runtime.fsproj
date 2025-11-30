@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <IsPackable>true</IsPackable>
+    <PackageId>FSharp.Data.YamlProviderV2</PackageId>
+    <Version>0.0.1</Version>
+    <Authors>FSharp.Data Contributors</Authors>
+    <Description>A modern YAML type provider for F# targeting .NET 8 and .NET 10</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="YamlParsing.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Add a YAML dependency so the runtime uses a NuGet package that must be resolved at design-time -->
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
+  </ItemGroup>
+
+  <!-- Include the design-time assembly in the package so IDEs can find it when the package is installed.
+       This will place the design-time DLL into the `build/net8.0/` folder inside the nupkg. 
+       When packing, ensure the design-time project has been built so the file exists. -->
+  <ItemGroup>
+    <None Include="..\FSharp.Data.YamlProviderV2.DesignTime\bin\$(Configuration)\net8.0\DesignTime.dll">
+      <Pack>true</Pack>
+      <PackagePath>build\net8.0\</PackagePath>
+    </None>
+  </ItemGroup>
+</Project>

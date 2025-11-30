@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Simple helper script to restore, build and pack the sample type provider without Paket.
+# Run from repo root: `./build.sh`
+
+ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+echo "Repo root: $ROOT_DIR"
+
+cd "$ROOT_DIR"
+mkdir -p src tests nupkgs
+
+echo "Creating source solution and adding projects (if not exists)"
+cd src
+dotnet new sln -n MyProvider --force
+dotnet sln MyProvider.sln add MyProvider.Runtime/MyProvider.Runtime.fsproj || true
+dotnet sln MyProvider.sln add MyProvider.DesignTime/MyProvider.DesignTime.fsproj || true
+# Add sample consumer project to the solution so IDEs can open it together
+if [ -f "$ROOT_DIR/samples/Consumer/Consumer.fsproj" ]; then
+	dotnet sln MyProvider.sln add ../samples/Consumer/Consumer.fsproj || true
+fi
+cd "$ROOT_DIR"
+
+echo "Restoring and building"
+dotnet restore src/MyProvider.sln
+dotnet build src/MyProvider.sln -c Debug --no-restore
+
+echo "Ensure design-time and runtime projects built"
+dotnet build src/MyProvider.Runtime/MyProvider.Runtime.fsproj -c Debug --no-restore || true
+dotnet build src/MyProvider.DesignTime/MyProvider.DesignTime.fsproj -c Debug --no-restore || true
+
+echo "You can run the test script after building:"
+echo "  dotnet fsi tests/try.fsx"
+
+echo "Pack runtime (multi-target) to nupkgs/ (optional):"
+echo "  dotnet pack src/MyProvider.Runtime/MyProvider.Runtime.fsproj -c Release -o nupkgs"
+
+echo "Packing runtime (includes design-time DLL into package build/net8.0/)"
+dotnet pack src/MyProvider.Runtime/MyProvider.Runtime.fsproj -c Debug -o nupkgs --no-build || true
+
+echo "Try running the FSI script (may or may not show provider behavior depending on FSI/IDE probing)"
+dotnet fsi tests/try.fsx || true
+
+echo "If you want to test the package in a fresh project, install the nupkg from ./nupkgs into a sample consumer or local feed."

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <LangVersion>latest</LangVersion>
+    <Authors>FSharp.Data Contributors</Authors>
+    <Description>Design-time assembly for FSharp.Data.YamlProviderV2</Description>
+    <!-- Ensure NuGet package assemblies are copied to output so the design-time loader can find them when the provider is loaded by the compiler/IDE -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <!-- Enable metadata assembly generation so type provider attributes are visible -->
+    <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.TypeProviders.SDK" Version="8.1.0" PrivateAssets="all" />
+    <!-- Pin FSharp.Compiler.Service for reproducible restore -->
+    <PackageReference Include="FSharp.Compiler.Service" Version="43.10.100" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FSharp.Data.YamlProviderV2.Runtime\Runtime.fsproj" />
+    <Compile Include="YamlTypeProvider.fs" />
+  </ItemGroup>
+</Project>

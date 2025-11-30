@@ -1,0 +1,25 @@
+# Sample YAML configuration for testing the YamlProviderV2
+name: MyApplication
+version: 2.0.0
+debug: true
+
+database:
+  host: localhost
+  port: 5432
+  name: mydb
+  username: admin
+  password: secret
+
+logging:
+  level: info
+  format: json
+
+features:
+  - name: feature1
+    enabled: true
+  - name: feature2
+    enabled: false
+
+ports:
+  http: 8080
+  https: 8443
